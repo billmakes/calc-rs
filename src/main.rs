@@ -94,7 +94,7 @@ impl Expr {
     fn eval(&self) -> i32 {
         match self {
             Expr::Integer(val) => *val as i32,
-            Expr::UnaryMinus(val) => val.eval() - val.eval() - val.eval(),
+            Expr::UnaryMinus(val) => val.eval() - val.eval() * 2,
             Expr::BinOp { lhs, op, rhs } => match op {
                 Op::Add => {
                     lhs.eval() + rhs.eval()
