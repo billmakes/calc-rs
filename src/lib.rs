@@ -1,7 +1,8 @@
 use pest::iterators::Pairs;
 use pest::pratt_parser::PrattParser;
 use pest::Parser;
-use std::io::{self, BufRead};
+use std::io;
+use std::io::prelude::*;
 
 #[derive(pest_derive::Parser)]
 #[grammar = "calc.pest"]
@@ -87,23 +88,28 @@ pub fn parse_expr(pairs: Pairs<Rule>) -> Expr {
 }
 
 pub fn repl() -> io::Result<()> {
-    for line in io::stdin().lock().lines() {
-        match CalculatorParser::parse(Rule::equation, &line?) {
+    const PROMPT: &str = ">> ";
+    loop {
+        let mut buffer = String::new();
+        print!("{}", PROMPT);
+        let _ = io::stdout().flush();
+        io::stdin().read_line(&mut buffer)?;
+        let line = buffer.trim();
+        match CalculatorParser::parse(Rule::equation, line) {
             Ok(mut pairs) => {
                 let inner = parse_expr(pairs.next().unwrap().into_inner());
                 println!(
-                    "Parsed: {:#?}",
+                    "\nParsed: {:#?}",
                     // inner of expr
                     inner
                 );
-                println!("{}", inner.eval());
+                println!("\n{}", inner.eval());
             }
             Err(e) => {
                 eprintln!("Parse failed: {:?}", e);
             }
         }
     }
-    Ok(())
 }
 
 #[cfg(test)]
@@ -135,7 +141,8 @@ mod tests {
             ("(13 * 25 / 2) - ((25 - 4) + (16 / 3) * 2)", 131),
             ("5 * 6 * 7 + 24 - 16", 218),
             ("750 / 5 + (6 * 2) / 2", 156),
-            ("1024 + 256 + 256 + 256 + 256 / (2)", 1920)
+            ("1024 + 256 + 256 + 256 + 256 / (2)", 1920),
+            ("13 * 2 % 5", 1),
         ];
         for test in test_table.into_iter() {
             let (input, expected) = test;
