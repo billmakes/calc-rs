@@ -5,12 +5,13 @@ unary_minus = { "-" }
 primary = _{ integer | "(" ~ expr ~ ")" }
 atom = _{ unary_minus? ~ primary }
 
-bin_op = _{ add | subtract | multiply | divide | modulo }
+bin_op = _{ add | subtract | multiply | divide | modulo | power }
 	add = { "+" }
 	subtract = { "-" }
 	multiply = { "*" }
 	divide = { "/" }
 	modulo = { "%" }
+	power = @{ "^" }
 
 expr = { atom ~ (bin_op ~ atom)* }
 

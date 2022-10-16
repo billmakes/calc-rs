@@ -1,6 +1,7 @@
 use pest::iterators::Pairs;
 use pest::pratt_parser::PrattParser;
 use pest::Parser;
+use std::convert::TryInto;
 use std::io;
 use std::io::prelude::*;
 
@@ -18,6 +19,7 @@ lazy_static::lazy_static! {
             // Addition and subtract have equal precedence
             .op(Op::infix(add, Left) | Op::infix(subtract, Left))
             .op(Op::infix(multiply, Left) | Op::infix(divide, Left) | Op::infix(modulo, Left))
+            .op(Op::infix(power, Left))
             .op(Op::prefix(unary_minus))
     };
 }
@@ -29,6 +31,7 @@ pub enum Op {
     Multiply,
     Divide,
     Modulo,
+    Power,
 }
 
 #[derive(Debug)]
@@ -53,6 +56,7 @@ impl Expr {
                 Op::Multiply => lhs.eval() * rhs.eval(),
                 Op::Divide => lhs.eval() / rhs.eval(),
                 Op::Modulo => lhs.eval() % rhs.eval(),
+                Op::Power => lhs.eval().pow(rhs.eval().try_into().unwrap()),
             },
         }
     }
@@ -72,6 +76,7 @@ pub fn parse_expr(pairs: Pairs<Rule>) -> Expr {
                 Rule::multiply => Op::Multiply,
                 Rule::divide => Op::Divide,
                 Rule::modulo => Op::Modulo,
+                Rule::power => Op::Power,
                 rule => unreachable!("Expr::parse expected infix operation, found {:?}", rule),
             };
             Expr::BinOp {
@@ -89,6 +94,7 @@ pub fn parse_expr(pairs: Pairs<Rule>) -> Expr {
 
 pub fn repl() -> io::Result<()> {
     const PROMPT: &str = ">> ";
+
     loop {
         let mut buffer = String::new();
         print!("{}", PROMPT);
@@ -143,6 +149,9 @@ mod tests {
             ("750 / 5 + (6 * 2) / 2", 156),
             ("1024 + 256 + 256 + 256 + 256 / (2)", 1920),
             ("13 * 2 % 5", 1),
+            ("13 * (5 - 3)^2", 52),
+            ("2^3 + 3^2", 17),
+            ("16^2/3*2-1+5", 174),
         ];
         for test in test_table.into_iter() {
             let (input, expected) = test;
